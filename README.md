@@ -1,7 +1,6 @@
 <img align="right" width="40%" 
      src="https://github-readme-stats-black-theta-32.vercel.app/api/top-langs/?username=loomkoom&&exclude_repo=obsidian-sync,github-readme-stats,cookie&langs_count=8&layout=compact" />
-
-
+<br>
 - 👋 Hi, I’m @loomkoom
 - 👀 I’m interested in AI,  App Security, Gaming & Anime
 - 🌱 I’m currently a student learning:<br> app development & AI, with some cybersecurity on the side.
