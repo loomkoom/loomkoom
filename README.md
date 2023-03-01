@@ -2,7 +2,7 @@
 
 
 <img align="right" width="47%" 
-     src="https://github-readme-stats-black-theta-32.vercel.app/api/top-langs/?username=loomkoom&&exclude_repo=obsidian-sync,github-readme-stats,cookie&langs_count=8&layout=compact&theme=gruvbox&bg_color=00000000" />
+     src="https://github-readme-stats-black-theta-32.vercel.app/api/top-langs/?username=loomkoom&&exclude_repo=obsidian-sync,github-readme-stats,cookie&langs_count=8&layout=compact&theme=gruvbox&bg_color=00000000&cache_seconds=1800" />
 <br><br><br>
 <img align="left" width="48%"
      src="https://github-readme-stats-black-theta-32.vercel.app/api/?username=loomkoom&show_icons=false&hide=stars,commits,prs,issues,contribs&hide_rank=true&theme=gruvbox&bg_color=00000000&line_height=13&custom_title=%F0%9F%91%80%20I%E2%80%99m%20interested%20in%20AI%2C%20%20App%20Security%2C%20Gaming%20%26%20Anime%0A">
