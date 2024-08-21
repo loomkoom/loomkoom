@@ -1,7 +1,7 @@
 ![](header.png)
 
 <img align="right" width="44%"
-     src="https://github-readme-stats-black-theta-32.vercel.app/api/top-langs/?username=loomkoom&langs_count=10&layout=compact&theme=gruvbox&bg_color=00000000&cache_seconds=1800&size_weight=0.2&count_weight=0.8" /> 
+     src="https://github-readme-stats-black-theta-32.vercel.app/api/top-langs/?username=loomkoom&langs_count=14&layout=compact&theme=gruvbox&bg_color=00000000&hide=blade,css,scss,json,markdown&size_weight=0.17&count_weight=0.83&cache_seconds=600" /> 
      
 <table><tr><td valign="center" height="275">
      <ul>
