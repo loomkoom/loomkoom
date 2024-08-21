@@ -5,8 +5,8 @@
      
 <table><tr><td valign="center" height="275">
      <ul>
-          <li> 👀 I’m interested in Devops, AI & Security</li> <br/> 
-          <li> 🌱 I’m currently a student learning:<br> app development & AI + some cybersecurity on my own.</li> <br/> 
+          <li> 👀 I’m interested in Devops, Deep learning & Pentesting/Reversing</li> <br/> 
+          <li> 🌱 I’m currently a student learning:<br> Pursuing my masters in Comp Sci</li> <br/> 
           <li> 📫 How to reach me:<br>| discord/loomkoom#8748 <br/>| twitter.com/loomkoom <br/>| email: loomkoom@hotmail.com</li> 
      </ul> 
 </td></tr></table>
