@@ -1,13 +1,19 @@
 ![](header.png)
 
-<img align="right" width="44%"
+<img align="right" width="42%" 
      src="https://github-readme-stats-black-theta-32.vercel.app/api/top-langs/?username=loomkoom&langs_count=14&layout=compact&theme=gruvbox&bg_color=00000000&hide=blade,css,scss,json,markdown&size_weight=0.17&count_weight=0.83&cache_seconds=600" /> 
-     
+
 <table><tr><td valign="center" height="275">
-     <ul>
-          <li> 👀 I’m interested in Devops, Deep learning & Pentesting/Reversing</li> <br/> 
-          <li> 🌱 I’m currently a student learning:<br> Pursuing my masters in Comp Sci</li> <br/> 
-          <li> 📫 How to reach me:<br>| discord/loomkoom#8748 <br/>| twitter.com/loomkoom <br/>| email: loomkoom@hotmail.com</li> 
+      <ul>
+          <li> <b>👀 Interests:</b> <br/>
+               I'm into DevOps, Deep learning, and Pentesting/Reversing. <br/> Always eager to dive different areas and learn more.</li> <br/> 
+          <li> <b>🌱 Current Focus:</b> <br/>
+               Pursuing a Master’s in Computer Science. <br/>Focusing on Machine Learning, and Distributed Systems.</li> <br/> 
+          <li> <b>📫 Let's Connect:</b> <br/>
+               Reach me on <br/>
+               | Discord: <a href="https://discord.com/users/239784715056316418">loomkoom#8748</a> <br/>
+               | Twitter: <a href="https://twitter.com/loomkoom">@loomkoom<a> <br/>
+               | email: <a href="mailto:https://twitter.com/loomkoom" >loomkoom@hotmail.com<a></li> 
      </ul> 
 </td></tr></table>
 
