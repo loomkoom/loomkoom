@@ -19,7 +19,7 @@
           <li> <b>👀 Interests:</b> <br/>
                I'm into DevOps, Deep learning, and Pentesting/Reversing. <br/> Always eager to dive different areas and learn more.</li> <br/> 
           <li> <b>🌱 Current Focus:</b> <br/>
-               Pursuing a Master’s in Computer Science. <br/>Focusing on Machine Learning, and Distributed Systems.</li> <br/> 
+               Pursuing a Master’s in Computer Science. <br/>Planned focus on Machine Learning, and Distributed Systems.</li> <br/> 
           <li> <b>📫 Let's Connect:</b> <br/>
                Reach me on <br/>
                | Discord: <a href="https://discord.com/users/239784715056316418">loomkoom</a> <br/>
