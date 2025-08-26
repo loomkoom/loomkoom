@@ -17,63 +17,170 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           set -euo pipefail
-      
+
           # ---------- Repo totals (REST) ----------
           USER_JSON=$(curl -fsSL -H "Authorization: Bearer $GH_TOKEN" https://api.github.com/user)
           PUBLIC_REPOS=$(echo "$USER_JSON"  | jq -r .public_repos)
           PRIVATE_REPOS=$(echo "$USER_JSON" | jq -r .total_private_repos)
           TOTAL_REPOS=$((PUBLIC_REPOS + PRIVATE_REPOS))
-      
+
           # ---------- Gists + Commits (GraphQL) ----------
           YEAR=$(date -u +%Y)
           FROM="${YEAR}-01-01T00:00:00Z"
           TO="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-      
-          GQL=$(cat <<'GRAPHQL'
+
+          GQL_MAIN=$(cat <<'GRAPHQL'
           query($from: DateTime!, $to: DateTime!) {
             viewer {
               gists(privacy: ALL) { totalCount }
               contributionsCollection(from: $from, to: $to) {
                 totalCommitContributions
               }
+              starredRepositories {
+                totalCount
+              }
             }
           }
           GRAPHQL
           )
-      
-          REQ=$(jq -n --arg q "$GQL" --arg from "$FROM" --arg to "$TO" \
-                 '{query:$q, variables:{from:$from, to:$to}}')
-      
+          REQ_MAIN=$(jq -n --arg q "$GQL_MAIN" --arg from "$FROM" --arg to "$TO" \
+                     '{query:$q, variables:{from:$from, to:$to}}')
+
           GQL_JSON=$(curl -fsSL https://api.github.com/graphql \
             -H "Authorization: Bearer $GH_TOKEN" \
             -H "Content-Type: application/json" \
-            --data "$REQ")
-      
-          # Optional: fail with a clear message if GraphQL returns errors
+            --data "$REQ_MAIN")
+
           if [ "$(echo "$GQL_JSON" | jq '.errors|length')" -gt 0 ]; then
             echo "GraphQL error:" >&2
             echo "$GQL_JSON" | jq '.errors' >&2
             exit 1
           fi
-      
+
           TOTAL_GISTS=$(echo "$GQL_JSON" | jq -r '.data.viewer.gists.totalCount')
           COMMITS_YEAR=$(echo "$GQL_JSON" | jq -r '.data.viewer.contributionsCollection.totalCommitContributions')
-      
+          STARS_GIVEN=$(echo "$GQL_JSON" | jq -r '.data.viewer.starredRepositories.totalCount')
+
+          # ---------- Lifetime commits (GraphQL, no date range) ----------
+          GQL_ALL=$(cat <<'GRAPHQL'
+          query {
+            viewer {
+              contributionsCollection {
+                totalCommitContributions
+              }
+            }
+          }
+          GRAPHQL
+          )
+          
+          REQ_ALL=$(jq -n --arg q "$GQL_ALL" '{query:$q}')
+          
+          GQL_ALL_JSON=$(curl -fsSL https://api.github.com/graphql \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data "$REQ_ALL")
+          
+          if [ "$(echo "$GQL_ALL_JSON" | jq '.errors|length')" -gt 0 ]; then
+            echo "GraphQL error (lifetime commits):" >&2
+            echo "$GQL_ALL_JSON" | jq '.errors' >&2
+            exit 1
+          fi
+          
+          COMMITS_LIFETIME=$(echo "$GQL_ALL_JSON" | jq -r '.data.viewer.contributionsCollection.totalCommitContributions')
+
+          # ---------- Pagination over owned repos for: stars received, fork count, languages used ----------
+          TOTAL_STARS=0
+          FORKS_OWNED=0
+          LANGS_FILE="$(mktemp)"
+          AFTER=null
+
+          while :; do
+            GQL_REPOS=$(cat <<'GRAPHQL'
+            query($after: String) {
+              viewer {
+                repositories(affiliations: OWNER, ownerAffiliations: OWNER, first: 100, after: $after, orderBy:{field: UPDATED_AT, direction: DESC}) {
+                  pageInfo { hasNextPage endCursor }
+                  nodes {
+                    isFork
+                    stargazerCount
+                    primaryLanguage { name }
+                  }
+                }
+              }
+            }
+            GRAPHQL
+            )
+            REQ_REPOS=$(jq -n --arg q "$GQL_REPOS" --argjson after "$AFTER" '{query:$q, variables:{after:$after}}')
+            REPOS_JSON=$(curl -fsSL https://api.github.com/graphql \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Content-Type: application/json" \
+              --data "$REQ_REPOS")
+
+            if [ "$(echo "$REPOS_JSON" | jq '.errors|length')" -gt 0 ]; then
+              echo "GraphQL error (repos page):" >&2
+              echo "$REPOS_JSON" | jq '.errors' >&2
+              exit 1
+            fi
+
+            # Sum stars, count forks, collect languages
+            STARS_PAGE=$(echo "$REPOS_JSON" | jq '[.data.viewer.repositories.nodes[].stargazerCount] | add // 0')
+            TOTAL_STARS=$((TOTAL_STARS + STARS_PAGE))
+
+            FORKS_PAGE=$(echo "$REPOS_JSON" | jq '[.data.viewer.repositories.nodes[] | select(.isFork==true)] | length')
+            FORKS_OWNED=$((FORKS_OWNED + FORKS_PAGE))
+
+            echo "$REPOS_JSON" | jq -r '.data.viewer.repositories.nodes[].primaryLanguage?.name' | sed '/^null$/d' >> "$LANGS_FILE"
+
+            HAS_NEXT=$(echo "$REPOS_JSON" | jq -r '.data.viewer.repositories.pageInfo.hasNextPage')
+            if [ "$HAS_NEXT" = "true" ]; then
+              AFTER=$(echo "$REPOS_JSON" | jq -r '.data.viewer.repositories.pageInfo.endCursor' | jq -R .)
+            else
+              break
+            fi
+          done
+
+          # Distinct languages used (primary language per repo)
+          if [ -s "$LANGS_FILE" ]; then
+            LANGS_USED=$(sort -u "$LANGS_FILE" | wc -l | tr -d ' ')
+          else
+            LANGS_USED=0
+          fi
+
           # ---------- Build Shields endpoint JSON files ----------
           mkdir -p out
-      
+
           cat > out/repos_total.json <<JSON
           { "schemaVersion": 1, "label": "repos", "message": "$TOTAL_REPOS", "color": "informational" }
           JSON
-      
+
           cat > out/gists_total.json <<JSON
           { "schemaVersion": 1, "label": "gists", "message": "$TOTAL_GISTS", "color": "informational" }
           JSON
-      
+
           cat > out/commits_year.json <<JSON
-          { "schemaVersion": 1, "label": "commits (this year)", "message": "$COMMITS_YEAR", "color": "informational" }
+          { "schemaVersion": 1, "label": "commits (year)", "message": "$COMMITS_YEAR", "color": "informational" }
           JSON
-      
+
+          cat > out/commits_lifetime.json <<JSON
+          { "schemaVersion": 1, "label": "commits (total)", "message": "$COMMITS_LIFETIME", "color": "informational" }
+          JSON
+
+          cat > out/stars_total.json <<JSON
+          { "schemaVersion": 1, "label": "stars", "message": "$TOTAL_STARS", "color": "informational" }
+          JSON
+
+          cat > out/stars_given.json <<JSON
+          { "schemaVersion": 1, "label": "stars given", "message": "$STARS_GIVEN", "color": "informational" }
+          JSON
+
+          cat > out/forks_owned.json <<JSON
+          { "schemaVersion": 1, "label": "forked repos", "message": "$FORKS_OWNED", "color": "informational" }
+          JSON
+
+          cat > out/languages_used.json <<JSON
+          { "schemaVersion": 1, "label": "languages used", "message": "$LANGS_USED", "color": "informational" }
+          JSON
+
           echo "Generated:"
           ls -l out
 
@@ -98,3 +205,31 @@ jobs:
           token: ${{ secrets.GH_TOKEN }}
           gist_id: ${{ secrets.GIST_ID }}
           file_path: out/commits_year.json
+
+      - name: Upload stars_total.json
+        uses: exuanbo/actions-deploy-gist@v1
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          gist_id: ${{ secrets.GIST_ID }}
+          file_path: out/stars_total.json
+
+      - name: Upload stars_given.json
+        uses: exuanbo/actions-deploy-gist@v1
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          gist_id: ${{ secrets.GIST_ID }}
+          file_path: out/stars_given.json
+
+      - name: Upload forks_owned.json
+        uses: exuanbo/actions-deploy-gist@v1
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          gist_id: ${{ secrets.GIST_ID }}
+          file_path: out/forks_owned.json
+
+      - name: Upload languages_used.json
+        uses: exuanbo/actions-deploy-gist@v1
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          gist_id: ${{ secrets.GIST_ID }}
+          file_path: out/languages_used.json
