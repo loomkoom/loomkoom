@@ -11,9 +11,9 @@
                Pursuing a Master’s in Computer Science. <br/>Focusing on Machine Learning, and Distributed Systems.</li> <br/> 
           <li> <b>📫 Let's Connect:</b> <br/>
                Reach me on <br/>
-               | Discord: <a href="https://discord.com/users/239784715056316418">loomkoom#8748</a> <br/>
-               | Twitter: <a href="https://twitter.com/loomkoom">@loomkoom<a> <br/>
-               | email: <a href="mailto:https://twitter.com/loomkoom" >loomkoom@hotmail.com<a></li> 
+               | Discord: <a href="https://discord.com/users/239784715056316418">loomkoom</a> <br/>
+               | Twitter: <a href="https://x.com/loomkoom">@loomkoom<a> <br/>
+               | email: <a href="mailto:loomkoom@hotmail.com" >loomkoom@hotmail.com<a></li> 
      </ul> 
 </td></tr></table>
 
