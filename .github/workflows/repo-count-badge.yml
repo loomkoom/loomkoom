@@ -1,0 +1,46 @@
+name: Repo count badge (incl. private)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "21 6 * * *"  # runs daily at 06:21 UTC
+
+jobs:
+  update-badge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Get totals from GitHub API
+        id: fetch
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          set -euo pipefail
+          DATA=$(curl -fsSL -H "Authorization: Bearer $GH_TOKEN" https://api.github.com/user)
+          PUBLIC=$(echo "$DATA"  | jq -r .public_repos)
+          PRIVATE=$(echo "$DATA" | jq -r .total_private_repos)
+          TOTAL=$((PUBLIC + PRIVATE))
+
+          mkdir out
+          # Shields "endpoint" JSONs:
+          cat > out/repos_total.json <<JSON
+          { "schemaVersion": 1, "label": "repos", "message": "$TOTAL", "color": "informational" }
+          JSON
+          cat > out/repos_public.json <<JSON
+          { "schemaVersion": 1, "label": "public repos", "message": "$PUBLIC", "color": "informational" }
+          JSON
+          cat > out/repos_private.json <<JSON
+          { "schemaVersion": 1, "label": "private repos", "message": "$PRIVATE", "color": "informational" }
+          JSON
+
+      - name: Upload to Gist (all three files)
+        uses: exuanbo/actions-deploy-gist@v1
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          gist_id: YOUR_GIST_ID_HERE
+          file_path: |
+            out/repos_total.json
+            out/repos_public.json
+            out/repos_private.json
