@@ -3,6 +3,17 @@
 <img align="right" width="42%" 
      src="https://github-readme-stats-black-theta-32.vercel.app/api/top-langs/?username=loomkoom&langs_count=14&layout=compact&theme=gruvbox&bg_color=00000000&hide=blade,html,css,scss,json,markdown,yaml&size_weight=0.17&count_weight=0.83&cache_seconds=600" /> 
 
+<!--- badges --->           
+<!-- | Repos | Forks | Gists | Stars | Stars given | Commits (year) | Languages | -->  
+![Repos](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/loomkoom/e9083829cc072b87fab7d4fc7a9c6415/raw/repos_total.json)
+![Forks](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/loomkoom/e9083829cc072b87fab7d4fc7a9c6415/raw/forks_owned.json)
+![Starred](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/loomkoom/e9083829cc072b87fab7d4fc7a9c6415/raw/stars_total.json)
+![Stars](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/loomkoom/e9083829cc072b87fab7d4fc7a9c6415/raw/stars_given.json)
+![Commits (yr)](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/loomkoom/e9083829cc072b87fab7d4fc7a9c6415/raw/commits_year.json)
+![Langs](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/loomkoom/e9083829cc072b87fab7d4fc7a9c6415/raw/languages_used.json)
+<!--- ![Gists](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/loomkoom/e9083829cc072b87fab7d4fc7a9c6415/raw/gists_total.json) ---> 
+<!--- ![Commits (lifetime)](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/loomkoom/e9083829cc072b87fab7d4fc7a9c6415/raw/commits_lifetime.json) ---> 
+
 <table><tr><td valign="center" height="275">
       <ul>
           <li> <b>👀 Interests:</b> <br/>
