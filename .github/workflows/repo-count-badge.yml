@@ -133,11 +133,11 @@ jobs:
           JSON
 
           cat > out/forks_owned.json <<JSON
-          { "schemaVersion": 1, "label": "forked repos", "message": "$FORKS_OWNED", "color": "informational" }
+          { "schemaVersion": 1, "label": "forked", "message": "$FORKS_OWNED", "color": "informational" }
           JSON
 
           cat > out/languages_used.json <<JSON
-          { "schemaVersion": 1, "label": "languages used", "message": "$LANGS_USED", "color": "informational" }
+          { "schemaVersion": 1, "label": "languages", "message": "$LANGS_USED", "color": "informational" }
           JSON
 
           echo "Generated:"
