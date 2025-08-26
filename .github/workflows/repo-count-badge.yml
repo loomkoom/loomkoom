@@ -1,4 +1,4 @@
-name: Repo count badge (incl. private)
+name: Repo metrics badges
 
 on:
   workflow_dispatch:
@@ -12,24 +12,84 @@ jobs:
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
 
-      - name: Get totals from GitHub API
+      - name: Fetch stats and produce JSON badges
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           set -euo pipefail
-          DATA=$(curl -fsSL -H "Authorization: Bearer $GH_TOKEN" https://api.github.com/user)
-          PUBLIC=$(echo "$DATA"  | jq -r .public_repos)
-          PRIVATE=$(echo "$DATA" | jq -r .total_private_repos)
-          TOTAL=$((PUBLIC + PRIVATE))
 
+          # ---------- Repo totals (REST) ----------
+          USER_JSON=$(curl -fsSL -H "Authorization: Bearer $GH_TOKEN" https://api.github.com/user)
+          PUBLIC_REPOS=$(echo "$USER_JSON"  | jq -r .public_repos)
+          PRIVATE_REPOS=$(echo "$USER_JSON" | jq -r .total_private_repos)
+          TOTAL_REPOS=$((PUBLIC_REPOS + PRIVATE_REPOS))
+
+          # ---------- Gists + Commits (GraphQL) ----------
+          YEAR=$(date -u +%Y)
+          FROM="${YEAR}-01-01T00:00:00Z"
+          TO="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+          read -r -d '' GQL <<'GRAPHQL'
+          query($from: DateTime!, $to: DateTime!) {
+            viewer {
+              gists(privacy: ALL) { totalCount }
+              contributionsCollection(from: $from, to: $to) {
+                totalCommitContributions
+              }
+            }
+          }
+          GRAPHQL
+
+          REQ=$(jq -n --arg q "$GQL" --arg from "$FROM" --arg to "$TO" \
+                 '{query:$q, variables:{from:$from, to:$to}}')
+
+          GQL_JSON=$(curl -fsSL https://api.github.com/graphql \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data "$REQ")
+
+          TOTAL_GISTS=$(echo "$GQL_JSON" | jq -r '.data.viewer.gists.totalCount')
+          COMMITS_YEAR=$(echo "$GQL_JSON" | jq -r '.data.viewer.contributionsCollection.totalCommitContributions')
+
+          # ---------- Build Shields endpoint JSON files ----------
           mkdir -p out
+
           cat > out/repos_total.json <<JSON
-          { "schemaVersion": 1, "label": "total repos: ", "message": "$TOTAL", "color": "informational" }
+          { "schemaVersion": 1, "label": "repos", "message": "$TOTAL_REPOS", "color": "informational" }
           JSON
 
+          cat > out/gists_total.json <<JSON
+          { "schemaVersion": 1, "label": "gists", "message": "$TOTAL_GISTS", "color": "informational" }
+          JSON
+
+          cat > out/commits_year.json <<JSON
+          { "schemaVersion": 1, "label": "commits (this year)", "message": "$COMMITS_YEAR", "color": "informational" }
+          JSON
+
+          echo "Generated:"
+          ls -l out
+          echo
+          echo "Example:"
+          cat out/commits_year.json
+
+      # Upload each file to the same Gist
       - name: Upload repos_total.json
         uses: exuanbo/actions-deploy-gist@v1
         with:
           token: ${{ secrets.GH_TOKEN }}
           gist_id: ${{ secrets.GIST_ID }}
           file_path: out/repos_total.json
+
+      - name: Upload gists_total.json
+        uses: exuanbo/actions-deploy-gist@v1
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          gist_id: ${{ secrets.GIST_ID }}
+          file_path: out/gists_total.json
+
+      - name: Upload commits_year.json
+        uses: exuanbo/actions-deploy-gist@v1
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          gist_id: ${{ secrets.GIST_ID }}
+          file_path: out/commits_year.json
