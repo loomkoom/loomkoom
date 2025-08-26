@@ -24,7 +24,7 @@ jobs:
 
           mkdir -p out
           cat > out/repos_total.json <<JSON
-          { "schemaVersion": 1, "label": "repos", "message": "$TOTAL", "color": "informational" }
+          { "schemaVersion": 1, "label": "total repos: ", "message": "$TOTAL", "color": "informational" }
           JSON
 
       - name: Upload repos_total.json
