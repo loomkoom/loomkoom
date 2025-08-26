@@ -117,7 +117,7 @@ jobs:
           JSON
 
           cat > out/commits_year.json <<JSON
-          { "schemaVersion": 1, "label": "commits (year)", "message": "$COMMITS_YEAR", "color": "informational" }
+          { "schemaVersion": 1, "label": "commits (yr)", "message": "$COMMITS_YEAR", "color": "informational" }
           JSON
 
           cat > out/commits_lifetime.json <<JSON
@@ -129,7 +129,7 @@ jobs:
           JSON
 
           cat > out/stars_given.json <<JSON
-          { "schemaVersion": 1, "label": "stars given", "message": "$STARS_GIVEN", "color": "informational" }
+          { "schemaVersion": 1, "label": "starred", "message": "$STARS_GIVEN", "color": "informational" }
           JSON
 
           cat > out/forks_owned.json <<JSON
@@ -137,7 +137,7 @@ jobs:
           JSON
 
           cat > out/languages_used.json <<JSON
-          { "schemaVersion": 1, "label": "languages", "message": "$LANGS_USED", "color": "informational" }
+          { "schemaVersion": 1, "label": "langs", "message": "$LANGS_USED", "color": "informational" }
           JSON
 
           echo "Generated:"
