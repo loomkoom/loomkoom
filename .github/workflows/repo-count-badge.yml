@@ -26,7 +26,7 @@ jobs:
           mkdir out
           # Shields "endpoint" JSONs:
           cat > out/repos_total.json <<JSON
-          { "schemaVersion": 1, "label": "repos", "message": "$TOTAL", "color": "informational" }
+          { "schemaVersion": 1, "label": "total repos", "message": "$TOTAL", "color": "informational" }
           JSON
           cat > out/repos_public.json <<JSON
           { "schemaVersion": 1, "label": "public repos", "message": "$PUBLIC", "color": "informational" }
@@ -39,7 +39,7 @@ jobs:
         uses: exuanbo/actions-deploy-gist@v1
         with:
           token: ${{ secrets.GH_TOKEN }}
-          gist_id: YOUR_GIST_ID_HERE
+          gist_id: e9083829cc072b87fab7d4fc7a9c6415
           file_path: |
             out/repos_total.json
             out/repos_public.json
