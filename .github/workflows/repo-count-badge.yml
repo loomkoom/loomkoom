@@ -24,27 +24,13 @@ jobs:
           PRIVATE_REPOS=$(echo "$USER_JSON" | jq -r .total_private_repos)
           TOTAL_REPOS=$((PUBLIC_REPOS + PRIVATE_REPOS))
 
-          # ---------- Gists + Commits (GraphQL) ----------
+          # ---------- Gists + Commits YTD + Stars given (GraphQL) ----------
           YEAR=$(date -u +%Y)
           FROM="${YEAR}-01-01T00:00:00Z"
           TO="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-          GQL_MAIN=$(cat <<'GRAPHQL'
-          query($from: DateTime!, $to: DateTime!) {
-            viewer {
-              gists(privacy: ALL) { totalCount }
-              contributionsCollection(from: $from, to: $to) {
-                totalCommitContributions
-              }
-              starredRepositories {
-                totalCount
-              }
-            }
-          }
-          GRAPHQL
-          )
-          REQ_MAIN=$(jq -n --arg q "$GQL_MAIN" --arg from "$FROM" --arg to "$TO" \
-                     '{query:$q, variables:{from:$from, to:$to}}')
+          GQL_MAIN='query($from: DateTime!, $to: DateTime!) { viewer { gists(privacy: ALL) { totalCount } contributionsCollection(from: $from, to: $to) { totalCommitContributions } starredRepositories { totalCount } } }'
+          REQ_MAIN=$(jq -n --arg q "$GQL_MAIN" --arg from "$FROM" --arg to "$TO" '{query:$q, variables:{from:$from, to:$to}}')
 
           GQL_JSON=$(curl -fsSL https://api.github.com/graphql \
             -H "Authorization: Bearer $GH_TOKEN" \
@@ -62,30 +48,20 @@ jobs:
           STARS_GIVEN=$(echo "$GQL_JSON" | jq -r '.data.viewer.starredRepositories.totalCount')
 
           # ---------- Lifetime commits (GraphQL, no date range) ----------
-          GQL_ALL=$(cat <<'GRAPHQL'
-          query {
-            viewer {
-              contributionsCollection {
-                totalCommitContributions
-              }
-            }
-          }
-          GRAPHQL
-          )
-          
+          GQL_ALL='query { viewer { contributionsCollection { totalCommitContributions } } }'
           REQ_ALL=$(jq -n --arg q "$GQL_ALL" '{query:$q}')
-          
+
           GQL_ALL_JSON=$(curl -fsSL https://api.github.com/graphql \
             -H "Authorization: Bearer $GH_TOKEN" \
             -H "Content-Type: application/json" \
             --data "$REQ_ALL")
-          
+
           if [ "$(echo "$GQL_ALL_JSON" | jq '.errors|length')" -gt 0 ]; then
             echo "GraphQL error (lifetime commits):" >&2
             echo "$GQL_ALL_JSON" | jq '.errors' >&2
             exit 1
           fi
-          
+
           COMMITS_LIFETIME=$(echo "$GQL_ALL_JSON" | jq -r '.data.viewer.contributionsCollection.totalCommitContributions')
 
           # ---------- Pagination over owned repos for: stars received, fork count, languages used ----------
@@ -95,22 +71,9 @@ jobs:
           AFTER=null
 
           while :; do
-            GQL_REPOS=$(cat <<'GRAPHQL'
-            query($after: String) {
-              viewer {
-                repositories(affiliations: OWNER, ownerAffiliations: OWNER, first: 100, after: $after, orderBy:{field: UPDATED_AT, direction: DESC}) {
-                  pageInfo { hasNextPage endCursor }
-                  nodes {
-                    isFork
-                    stargazerCount
-                    primaryLanguage { name }
-                  }
-                }
-              }
-            }
-            GRAPHQL
-            )
+            GQL_REPOS='query($after: String){ viewer { repositories(affiliations: OWNER, ownerAffiliations: OWNER, first: 100, after: $after, orderBy:{field: UPDATED_AT, direction: DESC}) { pageInfo { hasNextPage endCursor } nodes { isFork stargazerCount primaryLanguage { name } } } } }'
             REQ_REPOS=$(jq -n --arg q "$GQL_REPOS" --argjson after "$AFTER" '{query:$q, variables:{after:$after}}')
+
             REPOS_JSON=$(curl -fsSL https://api.github.com/graphql \
               -H "Authorization: Bearer $GH_TOKEN" \
               -H "Content-Type: application/json" \
@@ -123,12 +86,8 @@ jobs:
             fi
 
             # Sum stars, count forks, collect languages
-            STARS_PAGE=$(echo "$REPOS_JSON" | jq '[.data.viewer.repositories.nodes[].stargazerCount] | add // 0')
-            TOTAL_STARS=$((TOTAL_STARS + STARS_PAGE))
-
-            FORKS_PAGE=$(echo "$REPOS_JSON" | jq '[.data.viewer.repositories.nodes[] | select(.isFork==true)] | length')
-            FORKS_OWNED=$((FORKS_OWNED + FORKS_PAGE))
-
+            TOTAL_STARS=$((TOTAL_STARS + $(echo "$REPOS_JSON" | jq '[.data.viewer.repositories.nodes[].stargazerCount] | add // 0')))
+            FORKS_OWNED=$((FORKS_OWNED + $(echo "$REPOS_JSON" | jq '[.data.viewer.repositories.nodes[] | select(.isFork==true)] | length')))
             echo "$REPOS_JSON" | jq -r '.data.viewer.repositories.nodes[].primaryLanguage?.name' | sed '/^null$/d' >> "$LANGS_FILE"
 
             HAS_NEXT=$(echo "$REPOS_JSON" | jq -r '.data.viewer.repositories.pageInfo.hasNextPage')
@@ -205,6 +164,13 @@ jobs:
           token: ${{ secrets.GH_TOKEN }}
           gist_id: ${{ secrets.GIST_ID }}
           file_path: out/commits_year.json
+
+      - name: Upload commits_lifetime.json
+        uses: exuanbo/actions-deploy-gist@v1
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          gist_id: ${{ secrets.GIST_ID }}
+          file_path: out/commits_lifetime.json
 
       - name: Upload stars_total.json
         uses: exuanbo/actions-deploy-gist@v1
