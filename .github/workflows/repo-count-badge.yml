@@ -17,19 +17,19 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           set -euo pipefail
-
+      
           # ---------- Repo totals (REST) ----------
           USER_JSON=$(curl -fsSL -H "Authorization: Bearer $GH_TOKEN" https://api.github.com/user)
           PUBLIC_REPOS=$(echo "$USER_JSON"  | jq -r .public_repos)
           PRIVATE_REPOS=$(echo "$USER_JSON" | jq -r .total_private_repos)
           TOTAL_REPOS=$((PUBLIC_REPOS + PRIVATE_REPOS))
-
+      
           # ---------- Gists + Commits (GraphQL) ----------
           YEAR=$(date -u +%Y)
           FROM="${YEAR}-01-01T00:00:00Z"
           TO="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-
-          read -r -d '' GQL <<'GRAPHQL'
+      
+          GQL=$(cat <<'GRAPHQL'
           query($from: DateTime!, $to: DateTime!) {
             viewer {
               gists(privacy: ALL) { totalCount }
@@ -39,38 +39,43 @@ jobs:
             }
           }
           GRAPHQL
-
+          )
+      
           REQ=$(jq -n --arg q "$GQL" --arg from "$FROM" --arg to "$TO" \
                  '{query:$q, variables:{from:$from, to:$to}}')
-
+      
           GQL_JSON=$(curl -fsSL https://api.github.com/graphql \
             -H "Authorization: Bearer $GH_TOKEN" \
             -H "Content-Type: application/json" \
             --data "$REQ")
-
+      
+          # Optional: fail with a clear message if GraphQL returns errors
+          if [ "$(echo "$GQL_JSON" | jq '.errors|length')" -gt 0 ]; then
+            echo "GraphQL error:" >&2
+            echo "$GQL_JSON" | jq '.errors' >&2
+            exit 1
+          fi
+      
           TOTAL_GISTS=$(echo "$GQL_JSON" | jq -r '.data.viewer.gists.totalCount')
           COMMITS_YEAR=$(echo "$GQL_JSON" | jq -r '.data.viewer.contributionsCollection.totalCommitContributions')
-
+      
           # ---------- Build Shields endpoint JSON files ----------
           mkdir -p out
-
+      
           cat > out/repos_total.json <<JSON
           { "schemaVersion": 1, "label": "repos", "message": "$TOTAL_REPOS", "color": "informational" }
           JSON
-
+      
           cat > out/gists_total.json <<JSON
           { "schemaVersion": 1, "label": "gists", "message": "$TOTAL_GISTS", "color": "informational" }
           JSON
-
+      
           cat > out/commits_year.json <<JSON
           { "schemaVersion": 1, "label": "commits (this year)", "message": "$COMMITS_YEAR", "color": "informational" }
           JSON
-
+      
           echo "Generated:"
           ls -l out
-          echo
-          echo "Example:"
-          cat out/commits_year.json
 
       # Upload each file to the same Gist
       - name: Upload repos_total.json
